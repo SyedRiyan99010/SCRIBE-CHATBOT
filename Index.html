@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scribe AI Chatbot</title>
+    <script src="https://cdn-tailwindcss.vercel.app/"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #111827;
+        }
+        #chat-log::-webkit-scrollbar {
+            width: 6px;
+        }
+        #chat-log::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        #chat-log::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 3px;
+        }
+        #chat-log::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+        .listening-pulse {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(192, 132, 252, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(192, 132, 252, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(192, 132, 252, 0); }
+        }
+        @media (max-width: 640px) {
+            .header-title {
+                font-size: 1.125rem;
+            }
+            .header-subtitle {
+                font-size: 0.75rem;
+            }
+            .chat-input {
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+            .action-button {
+                 padding: 0.6rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <div id="welcome-page" class="flex flex-col items-center justify-center h-screen text-center p-8" style="background-image: url('https://www.transparenttextures.com/patterns/cubes.png'); background-color: #111827;">
+        <div class="relative flex items-center justify-center w-24 h-24 mb-6 rounded-full border-4 border-white/20 bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg">
+            <svg class="w-12 h-12 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+            </svg>
+        </div>
+        <h1 class="text-4xl md:text-5xl font-bold text-white mb-2">Welcome to Scribe</h1>
+        <p class="text-lg text-purple-200 mb-8 max-w-md">Your intelligent assistant for understanding and processing text. Ask me anything!</p>
+        <button id="start-chat-button" class="px-8 py-4 text-lg font-semibold text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition duration-300 ease-in-out transform hover:scale-105">
+            Start Chatting
+        </button>
+    </div>
+
+    <div id="chatbot-container" class="w-full h-full sm:max-w-2xl sm:h-[90vh] flex-col bg-[#0d0f1c] shadow-2xl sm:rounded-xl overflow-hidden border border-purple-900/50 hidden mx-auto my-auto">
+        
+        <header class="bg-gradient-to-r from-[#1e1b4b] to-[#4c1d95] p-4 shadow-md z-10 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                 <div class="relative flex items-center justify-center w-12 h-12 rounded-full border-2 border-white/20 bg-gradient-to-br from-purple-600 to-blue-600">
+                    <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white header-title">Scribe</h1>
+                    <p class="text-xs text-purple-200 header-subtitle">Implies the chatbot can understand and process text.</p>
+                </div>
+            </div>
+        </header>
+
+        <main id="chat-log" class="flex-1 p-4 sm:p-6 overflow-y-auto" style="background-image: url('https://www.transparenttextures.com/patterns/cubes.png'); background-color: #111827;">
+            <div class="flex items-start gap-3 mb-6">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center border-2 border-purple-500">
+                    <svg class="w-6 h-6 text-purple-300 font-bold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M11.353 4.117a.75.75 0 011.294 0l2.394 4.845a.75.75 0 00.566.411l5.346.777a.75.75 0 01.416 1.285l-3.868 3.77a.75.75 0 00-.217.665l.913 5.324a.75.75 0 01-1.088.79l-4.76-2.502a.75.75 0 00-.7 0l-4.76 2.502a.75.75 0 01-1.088-.79l.913-5.324a.75.75 0 00-.217-.665L2.28 11.435a.75.75 0 01.416-1.285l5.346-.777a.75.75 0 00.566-.411l2.394-4.845z" />
+                    </svg>
+                </div>
+                <div class="bg-gray-800 p-3 rounded-lg rounded-tl-none shadow-lg border border-gray-700">
+                    <p class="text-sm text-gray-200">Hello! I'm Scribe. How can I assist you? You can also use the microphone to talk to me.</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="bg-[#0d0f1c]/50 backdrop-blur-sm p-4 border-t border-purple-900/50">
+            <div id="mic-status" class="text-center text-purple-300 text-xs mb-2 h-4"></div>
+            <form id="chat-form" class="flex items-center space-x-2 md:space-x-4">
+                <input type="text" id="user-input" placeholder="Type or say something..." autocomplete="off"
+                    class="flex-1 w-full px-4 py-3 text-gray-200 bg-gray-900/50 border border-purple-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition chat-input">
+                
+                <button type="button" id="mic-button"
+                    class="p-3 text-white bg-purple-600 rounded-full hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition duration-300 ease-in-out transform hover:scale-110 action-button">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 016 0v8.25a3 3 0 01-3 3z" />
+                    </svg>
+                </button>
+                
+                <button type="submit" id="send-button"
+                    class="px-4 sm:px-6 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition duration-300 ease-in-out transform hover:scale-105 action-button">
+                    Send
+                </button>
+            </form>
+        </footer>
+    </div>
+
+    <script>
+        const welcomePage = document.getElementById('welcome-page');
+        const chatbotContainer = document.getElementById('chatbot-container');
+        const startChatButton = document.getElementById('start-chat-button');
+
+        startChatButton.addEventListener('click', () => {
+            welcomePage.classList.add('hidden');
+            chatbotContainer.classList.remove('hidden');
+            chatbotContainer.classList.add('flex');
+        });
+
+        const chatLog = document.getElementById('chat-log');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        const micButton = document.getElementById('mic-button');
+        const micStatus = document.getElementById('mic-status');
+
+        let chatHistory = [];
+        
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            let isListening = false;
+
+            micButton.addEventListener('click', () => {
+                if (isListening) {
+                    recognition.stop();
+                    return;
+                }
+                recognition.start();
+            });
+
+            recognition.onstart = () => {
+                isListening = true;
+                micButton.classList.add('listening-pulse', 'bg-red-600');
+                micStatus.textContent = "Listening...";
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                micButton.classList.remove('listening-pulse', 'bg-red-600');
+                micStatus.textContent = "";
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                userInput.value = transcript;
+                sendMessage();
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error:", event.error);
+                micStatus.textContent = `Error: ${event.error}`;
+            };
+
+        } else {
+            console.log("Speech Recognition not supported in this browser.");
+            micButton.style.display = 'none';
+            micStatus.textContent = "Voice input not supported.";
+        }
+
+        function appendMessage(message, sender) {
+            const messageWrapper = document.createElement('div');
+            const messageElement = document.createElement('div');
+            
+            messageElement.classList.add('p-3', 'rounded-lg', 'shadow-lg', 'max-w-xs', 'md:max-w-md', 'border');
+            messageElement.innerHTML = `<p class="text-sm break-words">${message.replace(/\n/g, '<br>')}</p>`;
+
+            if (sender === 'user') {
+                messageWrapper.classList.add('flex', 'justify-end', 'mb-6');
+                messageElement.classList.add('bg-blue-600', 'text-white', 'rounded-br-none', 'border-blue-500');
+                messageWrapper.appendChild(messageElement);
+            } else {
+                messageWrapper.classList.add('flex', 'items-start', 'gap-3', 'mb-6');
+                const botAvatar = `
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center border-2 border-purple-500">
+                        <svg class="w-6 h-6 text-purple-300 font-bold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                           <path d="M11.353 4.117a.75.75 0 011.294 0l2.394 4.845a.75.75 0 00.566.411l5.346.777a.75.75 0 01.416 1.285l-3.868 3.77a.75.75 0 00-.217.665l.913 5.324a.75.75 0 01-1.088.79l-4.76-2.502a.75.75 0 00-.7 0l-4.76 2.502a.75.75 0 01-1.088-.79l.913-5.324a.75.75 0 00-.217-.665L2.28 11.435a.75.75 0 01.416-1.285l5.346-.777a.75.75 0 00.566-.411l2.394-4.845z" />
+                        </svg>
+                    </div>`;
+                messageElement.classList.add('bg-gray-800', 'text-gray-200', 'rounded-tl-none', 'border-gray-700');
+                messageWrapper.innerHTML = botAvatar;
+                messageWrapper.appendChild(messageElement);
+            }
+
+            chatLog.appendChild(messageWrapper);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const typingIndicator = document.createElement('div');
+            typingIndicator.id = 'typing-indicator';
+            typingIndicator.classList.add('flex', 'items-start', 'gap-3', 'mb-6');
+            typingIndicator.innerHTML = `
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center border-2 border-purple-500">
+                    <svg class="w-6 h-6 text-purple-300 font-bold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M11.353 4.117a.75.75 0 011.294 0l2.394 4.845a.75.75 0 00.566.411l5.346.777a.75.75 0 01.416 1.285l-3.868 3.77a.75.75 0 00-.217.665l.913 5.324a.75.75 0 01-1.088.79l-4.76-2.502a.75.75 0 00-.7 0l-4.76 2.502a.75.75 0 01-1.088-.79l.913-5.324a.75.75 0 00-.217-.665L2.28 11.435a.75.75 0 01.416-1.285l5.346-.777a.75.75 0 00.566-.411l2.394-4.845z" />
+                    </svg>
+                </div>
+                <div class="bg-gray-800 p-3 rounded-lg rounded-tl-none shadow-lg border border-gray-700">
+                    <div class="flex items-center space-x-1">
+                        <span class="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style="animation-delay: 0s;"></span>
+                        <span class="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style="animation-delay: 0.2s;"></span>
+                        <span class="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style="animation-delay: 0.4s;"></span>
+                    </div>
+                </div>
+            `;
+            chatLog.appendChild(typingIndicator);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        async function getBotResponse(prompt) {
+            showTypingIndicator();
+            
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+            const payload = { contents: chatHistory };
+            
+            const apiKey = "AIzaSyCxaIeFafrbRJV8vg-JTYRGXw2jEKW4Jos"; 
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            
+            let retries = 3;
+            let delay = 1000;
+
+            while (retries > 0) {
+                try {
+                    if (apiKey === "YOUR_API_KEY_HERE") {
+                        hideTypingIndicator();
+                        appendMessage("It looks like you haven't added your API key yet. Please follow the guide to get one and add it to the code.", 'bot');
+                        return;
+                    }
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
+
+                    const result = await response.json();
+                    hideTypingIndicator();
+                    
+                    if (result.candidates?.[0]?.content?.parts?.[0]) {
+                        const botMessage = result.candidates[0].content.parts[0].text;
+                        chatHistory.push({ role: "model", parts: [{ text: botMessage }] });
+                        appendMessage(botMessage, 'bot');
+                    } else {
+                        const blockReason = result.promptFeedback?.blockReason;
+                        if (blockReason) {
+                            appendMessage(`I can't respond to that due to safety reasons (${blockReason}). Please try something else.`, 'bot');
+                        } else {
+                            appendMessage("I'm sorry, I couldn't generate a response. Please try again.", 'bot');
+                        }
+                    }
+                    return;
+
+                } catch (error) {
+                    console.error("Error fetching bot response:", error);
+                    retries--;
+                    if (retries === 0) {
+                        hideTypingIndicator();
+                        appendMessage("I'm having trouble connecting. Please check your connection and API key, then try again.", 'bot');
+                    } else {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2;
+                    }
+                }
+            }
+        }
+        
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (message) {
+                appendMessage(message, 'user');
+                getBotResponse(message);
+                userInput.value = '';
+            }
+        }
+
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            sendMessage();
+        });
+    </script>
+</body>
+</html>
