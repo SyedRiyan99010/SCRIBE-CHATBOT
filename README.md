@@ -103,5 +103,5 @@ This project is licensed under the MIT License
 👨‍💻 Author
 
 Riyan Pasha
-📧 Gmail
- | 🌐 GitHub
+📧 Gmail: riyansyed.ai.dev@gmail.com
+ | 🌐 GitHub: SyedRiyan99010
